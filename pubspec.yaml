@@ -37,7 +37,8 @@ dependencies:
   flutter_svg: ^1.1.0
   flutter_bloc: ^8.0.1
   equatable: 2.0.3
-  awesome_dialog: ^2.1.1
+  awesome_dialog: ^3.2.1
+  simple_animations: ^5.0.2
   http: ^0.13.4
   multiselect_formfield: ^0.1.7
   intl: ^0.17.0
@@ -55,7 +56,10 @@ dependencies:
   printing: ^5.3.0
   url_launcher: ^6.0.6
   flutter_ringtone_player: ^3.2.0
+  shared_preferences: ^2.1.0
 
+dependency_overrides:
+  simple_animations: ^5.0.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

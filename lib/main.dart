@@ -2,12 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_clasificacion_proveedor/constants.dart';
 import 'package:flutter_clasificacion_proveedor/presentation/bloc/add_log/add_log_cubit.dart';
-
+import 'dart:io';
 import 'package:flutter_clasificacion_proveedor/presentation/screens/login/login_screen.dart';
+
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+  }
+}
 
 void main() {
   // runApp(const MyApp());
-
+  HttpOverrides.global = MyHttpOverrides();
   runApp(RepositoryProvider(
     create: (context) {},
     child: MultiBlocProvider(

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_clasificacion_proveedor/data/model/clasi_model.dart';
-import 'package:flutter_clasificacion_proveedor/data/model/lod_model_reparto.dart';
 import 'package:flutter_clasificacion_proveedor/data/model/log_model.dart';
 import 'package:flutter_clasificacion_proveedor/data/model/user_model.dart';
 import 'package:flutter_clasificacion_proveedor/presentation/bloc/add_log/add_log_cubit.dart';
@@ -12,35 +11,31 @@ import 'package:flutter_clasificacion_proveedor/presentation/screens/login/login
 import 'package:flutter_clasificacion_proveedor/services/services.dart';
 import 'package:flutter_clasificacion_proveedor/utils/navigation_utils.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-class DashBoard extends StatefulWidget {
+class DashBoardSinMatricula extends StatefulWidget {
   final UserModel usuario;
-  DashBoard({Key? key, required this.usuario}) : super(key: key);
+  DashBoardSinMatricula({Key? key, required this.usuario}) : super(key: key);
 
   @override
-  State<DashBoard> createState() => _DashBoardState();
+  State<DashBoardSinMatricula> createState() => _DashBoardStateSinMatricula();
 }
 
-class _DashBoardState extends State<DashBoard> {
-  var matriculaController = TextEditingController();
+class _DashBoardStateSinMatricula extends State<DashBoardSinMatricula> {
+  //var matriculaController = TextEditingController();
   var skuController = TextEditingController();
   var posicionController = TextEditingController();
   List<ClasiModel> clasiModel = [];
   late FocusNode focusSKU;
-  late FocusNode focusmatricula;
+  //late FocusNode focusmatricula;
   int contador = 0;
   String error = "";
   bool visible = true;
   bool alarm = true;
-  int longitudMatricula = 0;
-  int longitudSku = 0;
 
   //late FocusNode focusUbication;
 
   @override
   void initState() {
-    _retrieveValues();
     visible = true;
     alarm = true;
     FlutterRingtonePlayer.stop();
@@ -49,7 +44,7 @@ class _DashBoardState extends State<DashBoard> {
 
     super.initState();
     focusSKU = FocusNode();
-    focusmatricula = FocusNode();
+    //focusmatricula = FocusNode();
 
     focusSKU.addListener(() {
       if (focusSKU.hasFocus) {
@@ -58,35 +53,23 @@ class _DashBoardState extends State<DashBoard> {
       }
     });
 
-    focusmatricula.addListener(() {
+    /* focusmatricula.addListener(() {
       if (focusmatricula.hasFocus) {
         matriculaController.selection = TextSelection(
             baseOffset: 0, extentOffset: matriculaController.text.length);
       }
-    });
-  }
-
-  _retrieveValues() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      longitudMatricula =
-          int.parse(prefs.getString('longitudMatricula') ?? "0");
-      //printer.text = prefs.getString('printer') ?? "";
-
-      longitudSku = int.parse(prefs.getString('longuitudSku') ?? "0");
-    });
+    });*/
   }
 
   void skuEnd() {
     String pos = skuController.text;
     pos = pos.substring(0, pos.length - 1);
-    if (longitudSku > 0 && longitudSku != skuController.text.length) {
-      errorDialog(
-          "La longitud del sku es de ${skuController.text.length} y en configuración tiene puesto $longitudSku");
-      focusSKU.requestFocus();
-      return;
-    }
     var op = clasiModel.where((e) => e.mocacota == pos).toList();
+    if (op.isEmpty) {
+      pos = skuController.text;
+
+      op = clasiModel.where((e) => e.mocacota == pos).toList();
+    }
 
     if (op.isEmpty) {
       if (alarm) {
@@ -114,7 +97,9 @@ class _DashBoardState extends State<DashBoard> {
         // String pos = op[0].posicion;
 
         posicionController.text = op[0].posicion;
-        focusmatricula.requestFocus();
+        logInsert();
+        // focusmatricula.requestFocus();
+        // focusSKU.requestFocus();
       });
     }
   }
@@ -144,51 +129,34 @@ class _DashBoardState extends State<DashBoard> {
     String resul = "";
     String sku = skuController.text;
 
-    String matri = matriculaController.text;
+    //String matri = matriculaController.text;
     String posicion = posicionController.text;
-
-    if (posicion.isEmpty) {
-      errorDialog("Error no se ha encontrado la posicion");
-      focusmatricula.requestFocus();
-      return;
-    }
-
-    if (longitudMatricula > 0) {
-      if (longitudMatricula != matri.length) {
-        errorDialog(
-            "Error el tamaño de la matricula es de : ${matri.length} y está configurado para $longitudMatricula");
-        focusmatricula.requestFocus();
-        return;
-      }
-    } else if (matri.length != 10 && matri.length != 20) {
+/*
+    if (matri.length != 10 && matri.length != 20) {
       errorDialog("Error el tamaño de la matricula es de : ${matri.length}");
       focusmatricula.requestFocus();
       return;
-    }
+    }*/
     setState(() {
       visible = false;
     });
     LogModel log = LogModel(
-      matricula: matri,
-      mocacota: sku,
-      posicion: posicion,
-      usuario: widget.usuario.usuarioId,
-    );
+        matricula: "",
+        mocacota: sku,
+        posicion: posicion,
+        usuario: widget.usuario.usuarioId);
     service.saveLog(log).then((String value) {
       setState(() {
         visible = true;
         if (value == "OK") {
           contador++;
           resul = value;
-          matriculaController.text = "";
+          //matriculaController.text = "";
           skuController.text = "";
-          posicionController.text = "";
+          // posicionController.text = "";
           focusSKU.requestFocus();
         } else {
-          errorDialog(value);
-          matriculaController.text = "";
-          skuController.text = "";
-          posicionController.text = "";
+          errorDialog("Error en la alta");
           focusSKU.requestFocus();
           //focusmatricula.requestFocus();
         }
@@ -197,7 +165,7 @@ class _DashBoardState extends State<DashBoard> {
       errorDialog("Error en la comunicación");
       setState(() {
         visible = true;
-        focusmatricula.requestFocus();
+        focusSKU.requestFocus();
       });
     });
   }
@@ -205,10 +173,10 @@ class _DashBoardState extends State<DashBoard> {
   @override
   void dispose() {
     FlutterRingtonePlayer.stop();
-    matriculaController.dispose();
+    // matriculaController.dispose();
     skuController.dispose();
     focusSKU.dispose();
-    focusmatricula.dispose();
+    //  focusmatricula.dispose();
     posicionController.dispose();
     super.dispose();
   }
@@ -342,7 +310,7 @@ class _DashBoardState extends State<DashBoard> {
                             ),
                           ),
                         ),
-                        const SizedBox(
+                        /*  const SizedBox(
                           height: 10,
                         ),
                         Container(
@@ -368,7 +336,7 @@ class _DashBoardState extends State<DashBoard> {
                               //icon: Icon(Icons.bar_chart_sharp),
                             ),
                           ),
-                        ),
+                        ),*/
                         const SizedBox(
                           height: 10,
                         ),

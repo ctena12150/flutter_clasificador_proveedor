@@ -14,6 +14,7 @@ import 'package:flutter_clasificacion_proveedor/presentation/screens/login/login
 import 'package:flutter_clasificacion_proveedor/services/services.dart';
 import 'package:flutter_clasificacion_proveedor/utils/navigation_utils.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DashBoardReparto extends StatefulWidget {
   final UserModel usuario;
@@ -34,6 +35,8 @@ class _DashBoardStateReparto extends State<DashBoardReparto> {
   String error = "";
   bool visible = true;
   bool alarm = true;
+  int longitudMatricula = 0;
+  int longitudSku = 0;
   RepartoPosicionModel repartoReposicionModel = RepartoPosicionModel(
       id: 0, id_reparto: '', mocacota: '', pendiente: 0, posicion: '');
 
@@ -44,6 +47,7 @@ class _DashBoardStateReparto extends State<DashBoardReparto> {
 
   @override
   void initState() {
+    _retrieveValues();
     visible = false;
     alarm = true;
     selectedReparto = '';
@@ -70,9 +74,22 @@ class _DashBoardStateReparto extends State<DashBoardReparto> {
     getData();
   }
 
+  _retrieveValues() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      longitudMatricula =
+          int.parse(prefs.getString('longitudMatricula') ?? "0");
+      //printer.text = prefs.getString('printer') ?? "";
+
+      longitudSku = int.parse(prefs.getString('longuitudSku') ?? "0");
+    });
+  }
+
   getData() async {
     Service service = Service();
-    service.fetchRepartos().then((List<RepartoModel> value) {
+    service
+        .fetchRepartos(widget.usuario.usuarioId)
+        .then((List<RepartoModel> value) {
       setState(() {
         _repartos = value;
         visible = true;
@@ -85,22 +102,30 @@ class _DashBoardStateReparto extends State<DashBoardReparto> {
 
   void skuEnd() {
     String pos = skuController.text;
+    if (longitudSku > 0) {
+      if (longitudSku != pos.length) {
+        errorDialog(
+            "La longitud del sku es de ${pos.length} y en configuración tiene puesto $longitudSku");
+        focusSKU.requestFocus();
+        return;
+      }
+    }
 
     pos = pos.substring(0, pos.length - 1);
     //var op = clasiModel.where((e) => e.mocacota == pos).toList();
     if (pos.isEmpty ||
-        selectedReparto!.isEmpty ||
-        skuController.text.length != 18) {
+        selectedReparto!
+            .isEmpty /* ||        skuController.text.length != 18*/) {
       if (alarm) {
         FlutterRingtonePlayer.playAlarm();
       }
       AwesomeDialog(
         context: context,
-        dialogType: DialogType.INFO,
-        animType: AnimType.BOTTOMSLIDE,
+        dialogType: DialogType.info,
+        animType: AnimType.bottomSlide,
         title: 'Error',
         desc:
-            'El código de barras no tiene  18 dígitos no está seleccionado el reparto',
+            'El código de barras está vacío o no está seleccionado el reparto',
         //btnCancelOnPress: () {},
         btnOkOnPress: () {
           FlutterRingtonePlayer.stop();
@@ -122,7 +147,7 @@ class _DashBoardStateReparto extends State<DashBoardReparto> {
 
       Service serviceReception = Service();
       serviceReception
-          .fetchPosicion(pos, selectedReparto!)
+          .fetchPosicion(pos, selectedReparto!, widget.usuario.usuarioId)
           .then((value) => {
                 setState(
                   () {
@@ -140,8 +165,8 @@ class _DashBoardStateReparto extends State<DashBoardReparto> {
                     visible = true;
                     AwesomeDialog(
                       context: context,
-                      dialogType: DialogType.INFO,
-                      animType: AnimType.BOTTOMSLIDE,
+                      dialogType: DialogType.info,
+                      animType: AnimType.bottomSlide,
                       title: 'Error',
                       desc: error.toString(),
                       //btnCancelOnPress: () {},
@@ -164,8 +189,8 @@ class _DashBoardStateReparto extends State<DashBoardReparto> {
 
     AwesomeDialog(
       context: context,
-      dialogType: DialogType.INFO,
-      animType: AnimType.BOTTOMSLIDE,
+      dialogType: DialogType.info,
+      animType: AnimType.bottomSlide,
       title: 'Error',
       desc: error,
       //btnCancelOnPress: () {},
@@ -185,7 +210,23 @@ class _DashBoardStateReparto extends State<DashBoardReparto> {
     String matri = matriculaController.text;
     String posicion = posicionController.text;
 
-    if (matri.length != 10 && matri.length != 20) {
+    if (longitudSku > 0) {
+      if (longitudSku != sku.length) {
+        errorDialog(
+            "La longitud del sku es de ${sku.length} y en configuración tiene puesto $longitudSku");
+        focusSKU.requestFocus();
+        return;
+      }
+    }
+
+    if (longitudMatricula > 0) {
+      if (longitudMatricula != matri.length) {
+        errorDialog(
+            "Error el tamaño de la matricula es de : ${matri.length} y está configurado para $longitudMatricula");
+        focusmatricula.requestFocus();
+        return;
+      }
+    } else if (matri.length != 10 && matri.length != 20) {
       errorDialog("Error el tamaño de la matricula es de : ${matri.length}");
       focusmatricula.requestFocus();
       return;

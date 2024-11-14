@@ -29,8 +29,8 @@ class LoginForm extends StatelessWidget {
             state is LoginValidateState2) {
           AwesomeDialog(
             context: context,
-            dialogType: DialogType.INFO,
-            animType: AnimType.BOTTOMSLIDE,
+            dialogType: DialogType.info,
+            animType: AnimType.bottomSlide,
             title: 'Error',
             desc: state.error,
 
@@ -72,8 +72,8 @@ class LoginForm extends StatelessWidget {
                           ),
                         ),
                       ),
-                      /* Padding(
-                         padding: const EdgeInsets.symmetric(
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
                             vertical: defaultPadding),
                         child: TextFormField(
                           controller: passwordController,
@@ -91,7 +91,7 @@ class LoginForm extends StatelessWidget {
                             ),
                           ),
                         ),
-                      ), */
+                      ),
                       const SizedBox(height: defaultPadding),
                       Hero(
                         tag: "login_btn",
@@ -103,6 +103,7 @@ class LoginForm extends StatelessWidget {
                                 },
                           child: Text(
                             "Login".toUpperCase(),
+                            style: const TextStyle(color: Colors.white),
                           ),
                         ),
                       ),

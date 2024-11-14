@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_clasificacion_proveedor/data/model/user_model.dart';
+import 'package:flutter_clasificacion_proveedor/presentation/dashboard/configuracion_view.dart';
 import 'package:flutter_clasificacion_proveedor/presentation/dashboard/dashboard.dart';
 import 'package:flutter_clasificacion_proveedor/presentation/dashboard/dashboard_reparto.dart';
+import 'package:flutter_clasificacion_proveedor/presentation/quality/calidad.dart';
+
+import 'dashboard_sin_matricula.dart';
 
 class Panel extends StatelessWidget {
   final UserModel usuario;
@@ -11,7 +15,7 @@ class Panel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Clasificador'),
+        title: const Text('Clasificador v 0.0.6'),
       ),
       body: MainMenuBody(
         usuario: usuario,
@@ -26,8 +30,11 @@ class MainMenuBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<MenuData> menu = [
-      // MenuData(Icons.add_shopping_cart, 'CLASIFICADOR'),
+      MenuData(Icons.add_shopping_cart, 'CLASIFICADOR MATRICULA'),
       MenuData(Icons.rule, 'CLASIFICADOR REPARTO PROVEEDOR'),
+      MenuData(Icons.add_shopping_cart, 'CLASIFICADOR SIN MATRICULA'),
+      MenuData(Icons.high_quality, 'REVISION CALIDAD'),
+      MenuData(Icons.precision_manufacturing_sharp, 'CONFIGURACIÓN'),
     ];
 
     return Container(
@@ -56,15 +63,33 @@ class MainMenuBody extends StatelessWidget {
                     child: InkWell(
                       onTap: () {
                         switch (index) {
-                          /* case 0: // Enter this block if mark == 0
+                          case 0: // Enter this block if mark == 0
                             Navigator.of(context).push(MaterialPageRoute(
                                 builder: (context) => DashBoard(
                                       usuario: usuario,
                                     )));
-                            break;*/
-                          case 0: // Enter this block if mark == 0
+                            break;
+                          case 1: // Enter this block if mark == 0
                             Navigator.of(context).push(MaterialPageRoute(
                                 builder: (context) => DashBoardReparto(
+                                      usuario: usuario,
+                                    )));
+                            break;
+                          case 2: // Enter this block if mark == 0
+                            Navigator.of(context).push(MaterialPageRoute(
+                                builder: (context) => DashBoardSinMatricula(
+                                      usuario: usuario,
+                                    )));
+                            break;
+                          case 3: // Enter this block if mark == 0
+                            Navigator.of(context).push(MaterialPageRoute(
+                                builder: (context) => Calidad(
+                                      usuario: usuario,
+                                    )));
+                            break;
+                          case 4: // Enter this block if mark == 0
+                            Navigator.of(context).push(MaterialPageRoute(
+                                builder: (context) => ConfigurationView(
                                       usuario: usuario,
                                     )));
                             break;

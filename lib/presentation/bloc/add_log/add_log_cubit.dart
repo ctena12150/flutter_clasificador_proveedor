@@ -47,8 +47,9 @@ class AddLogCubit extends Cubit<AddLogState> {
     }
   }
 
-  Future<void> fetchPosiciones() async {
-    String base = "${BASE_URL}Clasificacion/ClasiPosiciones/";
+  Future<void> fetchPosiciones(String usuario) async {
+    String base =
+        "${BASE_URL}Clasificacion/ClasiPosicionesNew?usuario=$usuario";
     try {
       emit(const AddLogState.loading());
       final response = await http.get(Uri.parse(base));

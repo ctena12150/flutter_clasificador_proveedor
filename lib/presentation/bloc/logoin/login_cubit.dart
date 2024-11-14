@@ -55,7 +55,7 @@ class LoginCubit extends Cubit<LoginState> {
 
         //   emit(const LoginLoadingState(true));
 
-        // String base = "${BASE_URL}Usuario/Usuario";
+        String base = "${BASE_URL}Usuario/Usuario";
         String usuario = userController.text.trim();
         if (usuario.isEmpty) {
           if (isLoginFailed) {
@@ -74,19 +74,19 @@ class LoginCubit extends Cubit<LoginState> {
           return;
         }
 
-        //   String pass = passwordController.text.trim();
-        //  base += "/$usuario";
-        //   base += "/$pass";
+        String pass = passwordController.text.trim();
+        base += "/$usuario";
+        base += "/$pass";
 
-        /*   var url = Uri.parse(base);
+        var url = Uri.parse(base);
         final response = await http.get(url, headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Credentials': 'true',
           'Access-Control-Allow-Headers': 'Content-Type',
           'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE'
-        }); */
-        /*  if (response.statusCode == 200) {
+        });
+        if (response.statusCode == 200) {
           final parsed = json.decode(response.body) as List;
           if (parsed.isEmpty) {
             if (isLoginFailed) {
@@ -112,7 +112,7 @@ class LoginCubit extends Cubit<LoginState> {
           emit(LoginValidateState(
               isValidate: isLoginFailed,
               error: response.statusCode.toString()));
-        } */
+        }
 
         UserModel user = UserModel(usuarioId: usuario);
         emit(LoginComplete(user));

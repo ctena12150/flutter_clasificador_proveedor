@@ -1,6 +1,10 @@
 import 'dart:convert';
 
+import 'package:flutter_clasificacion_proveedor/data/model/borrar_bulto_calidad.dart';
+import 'package:flutter_clasificacion_proveedor/data/model/calidad_detalle_model.dart';
+import 'package:flutter_clasificacion_proveedor/data/model/calidad_model.dart';
 import 'package:flutter_clasificacion_proveedor/data/model/lod_model_reparto.dart';
+import 'package:flutter_clasificacion_proveedor/data/model/log_calidad.dart';
 import 'package:flutter_clasificacion_proveedor/data/model/log_model.dart';
 import 'package:flutter_clasificacion_proveedor/data/model/reparto_model.dart';
 import 'package:flutter_clasificacion_proveedor/data/model/reparto_posicion_model.dart';
@@ -8,8 +12,140 @@ import 'package:flutter_clasificacion_proveedor/utils/navigation_utils.dart';
 import 'package:http/http.dart' as http;
 
 class Service {
+  Future<int> borrarBultoCalidad(BorrarBultoCalidaModel linea) async {
+    String base = "${BASE_URL}Calidad/DeleteBultoCalidad";
+
+    var data = linea.toJson();
+    // Map<String, dynamic> data = partesTrabajoLineaModel.toJson();
+
+    final body = jsonEncode(data);
+    var url = Uri.parse(base);
+
+    final response = await http.post(url,
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Credentials': 'true',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE'
+        },
+        body: body);
+    if (response.statusCode == 200) {
+      return 0;
+    } else {
+      throw Exception('Error salvar los datos');
+    }
+  }
+
+  Future<String> cerrarRevision(String nombre) async {
+    String base = "${BASE_URL}Calidad/CerrarRevision";
+
+    base += "/$nombre";
+
+    var url = Uri.parse(base);
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Credentials': 'true',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE'
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // final parsed = json.decode(response.body) as List;
+
+        return "OK";
+      } else {
+        return "Error ${response.statusCode}";
+      }
+    } catch (exception) {
+      return exception.toString();
+    }
+  }
+
+  Future<List<CalidadDetalleModel>> resetMocacoCalidad(
+      LogCalidaModel linea) async {
+    String base = "${BASE_URL}Calidad/ResetMocacoCalidad";
+
+    var data = linea.toJson();
+    // Map<String, dynamic> data = partesTrabajoLineaModel.toJson();
+
+    final body = jsonEncode(data);
+    var url = Uri.parse(base);
+
+    final response = await http.post(url,
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Credentials': 'true',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE'
+        },
+        body: body);
+    if (response.statusCode == 200) {
+      if (response.body == "[]") return [];
+      final parsed = json.decode(response.body).cast<Map<String, dynamic>>();
+      return parsed
+          .map<CalidadDetalleModel>(
+              (json) => CalidadDetalleModel.fromJson(json))
+          .toList();
+    } else {
+      throw Exception('Error salvar los datos');
+    }
+  }
+
+  Future<List<CalidadDetalleModel>> saveLogCalidad(LogCalidaModel linea) async {
+    String base = "${BASE_URL}Calidad/AddRevisionCalidad";
+
+    var data = linea.toJson();
+    // Map<String, dynamic> data = partesTrabajoLineaModel.toJson();
+
+    final body = jsonEncode(data);
+    var url = Uri.parse(base);
+
+    final response = await http.post(url,
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Credentials': 'true',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE'
+        },
+        body: body);
+    if (response.statusCode == 200) {
+      if (response.body == "[]") return [];
+      final parsed = json.decode(response.body).cast<Map<String, dynamic>>();
+      return parsed
+          .map<CalidadDetalleModel>(
+              (json) => CalidadDetalleModel.fromJson(json))
+          .toList();
+    } else {
+      throw Exception('Error salvar los datos');
+    }
+  }
+
+  Future<List<CalidadModel>> fetchRevisionCalidadPendientes() async {
+    String base = "${BASE_URL}Calidad/GetRevisionCalidadPendientes";
+
+    final response = await http.get(Uri.parse(base));
+
+    if (response.statusCode == 200) {
+      final parsed = json.decode(response.body).cast<Map<String, dynamic>>();
+      return parsed
+          .map<CalidadModel>((json) => CalidadModel.fromJson(json))
+          .toList();
+    } else {
+      throw Exception('Error Rbúsqueda de calidad');
+    }
+  }
+
   Future<String> saveLog(LogModel lineas) async {
-    String base = "${BASE_URL}Clasificacion/AddClasiLogProveedor";
+    String base = "${BASE_URL}Clasificacion/AddClasiLogNewProcedure";
 
     var data = lineas.toJson();
     // Map<String, dynamic> data = partesTrabajoLineaModel.toJson();
@@ -29,8 +165,11 @@ class Service {
 
       if (response.statusCode == 200) {
         // String reponse = response.body;
-
-        return "OK";
+        if (response.body.toUpperCase() == "OK") {
+          return "OK";
+        } else {
+          return "Error  ${response.body}";
+        }
       } else {
         return "Error ${response.statusCode}";
       }
@@ -39,8 +178,9 @@ class Service {
     }
   }
 
-  Future<List<RepartoModel>> fetchRepartos() async {
-    String base = "${BASE_URL}Clasificacion/GetRepartosProveedor";
+  Future<List<RepartoModel>> fetchRepartos(String usuario) async {
+    String base =
+        "${BASE_URL}Clasificacion/GetRepartosProveedorNew?usuario=$usuario";
 
     final response = await http.get(Uri.parse(base));
 
@@ -55,9 +195,9 @@ class Service {
   }
 
   Future<RepartoPosicionModel> fetchPosicion(
-      String mocacota, String idReparto) async {
+      String mocacota, String idReparto, String usuario) async {
     String base =
-        "${BASE_URL}Clasificacion/ClasiPosicionRepartoProveedor?mocacota=$mocacota&id_reparto=$idReparto";
+        "${BASE_URL}Clasificacion/ClasiPosicionRepartoProveedorNew?mocacota=$mocacota&id_reparto=$idReparto&usuario=$usuario";
 
     final response = await http.get(Uri.parse(base));
 
