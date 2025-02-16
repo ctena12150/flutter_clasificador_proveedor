@@ -12,6 +12,32 @@ import 'package:flutter_clasificacion_proveedor/utils/navigation_utils.dart';
 import 'package:http/http.dart' as http;
 
 class Service {
+  Future<int> borrarBultoCalidadDiferencias(
+      BorrarBultoCalidaModel linea) async {
+    String base = "${BASE_URL}Calidad/DeleteBultoCalidadDiferencias";
+
+    var data = linea.toJson();
+    // Map<String, dynamic> data = partesTrabajoLineaModel.toJson();
+
+    final body = jsonEncode(data);
+    var url = Uri.parse(base);
+
+    final response = await http.post(url,
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Credentials': 'true',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE'
+        },
+        body: body);
+    if (response.statusCode == 200) {
+      return 0;
+    } else {
+      throw Exception('Error salvar los datos');
+    }
+  }
+
   Future<int> borrarBultoCalidad(BorrarBultoCalidaModel linea) async {
     String base = "${BASE_URL}Calidad/DeleteBultoCalidad";
 
@@ -37,8 +63,8 @@ class Service {
     }
   }
 
-  Future<String> cerrarRevision(String nombre) async {
-    String base = "${BASE_URL}Calidad/CerrarRevision";
+  Future<String> cerrarRevisionDiferencias(String nombre) async {
+    String base = "${BASE_URL}Calidad/CerrarRevisionDiferencias";
 
     base += "/$nombre";
 
@@ -68,9 +94,102 @@ class Service {
     }
   }
 
+  Future<String> cerrarRevision(String nombre) async {
+    String base = "${BASE_URL}Calidad/CerrarRevision";
+
+    base += "/$nombre";
+
+    var url = Uri.parse(base);
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Credentials': 'true',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE'
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final parsed = json.decode(response.body) as List;
+
+        return "OK";
+      } else {
+        return "Error ${response.statusCode}";
+      }
+    } catch (exception) {
+      return exception.toString();
+    }
+  }
+
+  Future<List<CalidadDetalleModel>> resetMocacoCalidadDiferencias(
+      LogCalidaModel linea) async {
+    String base = "${BASE_URL}Calidad/ResetMocacoCalidadDiferencias";
+
+    var data = linea.toJson();
+    // Map<String, dynamic> data = partesTrabajoLineaModel.toJson();
+
+    final body = jsonEncode(data);
+    var url = Uri.parse(base);
+
+    final response = await http.post(url,
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Credentials': 'true',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE'
+        },
+        body: body);
+    if (response.statusCode == 200) {
+      if (response.body == "[]") return [];
+      final parsed = json.decode(response.body).cast<Map<String, dynamic>>();
+      return parsed
+          .map<CalidadDetalleModel>(
+              (json) => CalidadDetalleModel.fromJson(json))
+          .toList();
+    } else {
+      throw Exception('Error salvar los datos');
+    }
+  }
+
   Future<List<CalidadDetalleModel>> resetMocacoCalidad(
       LogCalidaModel linea) async {
     String base = "${BASE_URL}Calidad/ResetMocacoCalidad";
+
+    var data = linea.toJson();
+    // Map<String, dynamic> data = partesTrabajoLineaModel.toJson();
+
+    final body = jsonEncode(data);
+    var url = Uri.parse(base);
+
+    final response = await http.post(url,
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Credentials': 'true',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE'
+        },
+        body: body);
+    if (response.statusCode == 200) {
+      if (response.body == "[]") return [];
+      final parsed = json.decode(response.body).cast<Map<String, dynamic>>();
+      return parsed
+          .map<CalidadDetalleModel>(
+              (json) => CalidadDetalleModel.fromJson(json))
+          .toList();
+    } else {
+      throw Exception('Error salvar los datos');
+    }
+  }
+
+  Future<List<CalidadDetalleModel>> saveLogCalidadDiferencias(
+      LogCalidaModel linea) async {
+    String base = "${BASE_URL}Calidad/AddRevisionCalidadDiferencias";
 
     var data = linea.toJson();
     // Map<String, dynamic> data = partesTrabajoLineaModel.toJson();
@@ -126,6 +245,21 @@ class Service {
           .toList();
     } else {
       throw Exception('Error salvar los datos');
+    }
+  }
+
+  Future<List<CalidadModel>> fetchRevisionCalidadPendientesDiferencias() async {
+    String base = "${BASE_URL}Calidad/GetRevisionCalidadPendientesDiferencias";
+
+    final response = await http.get(Uri.parse(base));
+
+    if (response.statusCode == 200) {
+      final parsed = json.decode(response.body).cast<Map<String, dynamic>>();
+      return parsed
+          .map<CalidadModel>((json) => CalidadModel.fromJson(json))
+          .toList();
+    } else {
+      throw Exception('Error Rbúsqueda de calidad');
     }
   }
 

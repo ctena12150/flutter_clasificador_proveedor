@@ -4,6 +4,7 @@ import 'package:flutter_clasificacion_proveedor/presentation/dashboard/configura
 import 'package:flutter_clasificacion_proveedor/presentation/dashboard/dashboard.dart';
 import 'package:flutter_clasificacion_proveedor/presentation/dashboard/dashboard_reparto.dart';
 import 'package:flutter_clasificacion_proveedor/presentation/quality/calidad.dart';
+import 'package:flutter_clasificacion_proveedor/presentation/quality/calidad_diferencias.dart';
 
 import 'dashboard_sin_matricula.dart';
 
@@ -15,7 +16,7 @@ class Panel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Clasificador v 0.0.6'),
+        title: const Text('Clasificador v 0.0.7'),
       ),
       body: MainMenuBody(
         usuario: usuario,
@@ -34,6 +35,7 @@ class MainMenuBody extends StatelessWidget {
       MenuData(Icons.rule, 'CLASIFICADOR REPARTO PROVEEDOR'),
       MenuData(Icons.add_shopping_cart, 'CLASIFICADOR SIN MATRICULA'),
       MenuData(Icons.high_quality, 'REVISION CALIDAD'),
+      MenuData(Icons.high_quality, 'REVISION CALIDAD DIFERENCIAS'),
       MenuData(Icons.precision_manufacturing_sharp, 'CONFIGURACIÓN'),
     ];
 
@@ -88,6 +90,12 @@ class MainMenuBody extends StatelessWidget {
                                     )));
                             break;
                           case 4: // Enter this block if mark == 0
+                            Navigator.of(context).push(MaterialPageRoute(
+                                builder: (context) => CalidadDiferencias(
+                                      usuario: usuario,
+                                    )));
+                            break;
+                          case 5: // Enter this block if mark == 0
                             Navigator.of(context).push(MaterialPageRoute(
                                 builder: (context) => ConfigurationView(
                                       usuario: usuario,

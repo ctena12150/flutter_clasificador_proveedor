@@ -4,20 +4,21 @@ import 'package:flutter_clasificacion_proveedor/data/model/calidad_model.dart';
 import 'package:flutter_clasificacion_proveedor/data/model/user_model.dart';
 import 'package:flutter_clasificacion_proveedor/presentation/dashboard/panel.dart';
 import 'package:flutter_clasificacion_proveedor/presentation/quality/calidadDetalles.dart';
+import 'package:flutter_clasificacion_proveedor/presentation/quality/calidadDetalles_diferencias.dart';
 import 'package:flutter_clasificacion_proveedor/utils/navigation_utils.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 
 import '../../services/services.dart';
 
-class Calidad extends StatefulWidget {
+class CalidadDiferencias extends StatefulWidget {
   final UserModel usuario;
-  Calidad({Key? key, required this.usuario}) : super(key: key);
+  const CalidadDiferencias({Key? key, required this.usuario}) : super(key: key);
 
   @override
-  State<Calidad> createState() => _PendienteState();
+  State<CalidadDiferencias> createState() => _PendienteState();
 }
 
-class _PendienteState extends State<Calidad> {
+class _PendienteState extends State<CalidadDiferencias> {
   TextEditingController textController = TextEditingController();
   bool loading = false;
   List<CalidadModel> items = [];
@@ -50,7 +51,7 @@ class _PendienteState extends State<Calidad> {
 
   getdata() async {
     Service service = Service();
-    service.fetchRevisionCalidadPendientes().then(
+    service.fetchRevisionCalidadPendientesDiferencias().then(
       (value) {
         setState(() {
           items = value;
@@ -281,7 +282,7 @@ class _ItemViewState extends State<ItemView> {
                                           Navigator.of(context).pushReplacement(
                                               MaterialPageRoute(
                                                   builder: (context) =>
-                                                      CalidadDetalles(
+                                                      CalidadDetallesDiferencias(
                                                         usuario: widget.usuario,
                                                         nombre:
                                                             itemsResult[index]

@@ -39,7 +39,7 @@ const String ENTORNO = "dev";
 
 //azure
 
-const String BASE_URL = "https://thinktextilwebapi.azurewebsites.net/api/";
-const String BASE_URL_ = "https://10.0.2.2:7293/api/";
+const String BASE_URL_ = "https://thinktextilwebapi.azurewebsites.net/api/";
+const String BASE_URL = "https://10.0.2.2:7293/api/";
 
-const String VERSION = 'v: 0.06';
+const String VERSION = 'v: 0.07';
