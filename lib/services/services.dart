@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_clasificacion_proveedor/data/model/borrar_bulto_calidad.dart';
 import 'package:flutter_clasificacion_proveedor/data/model/calidad_detalle_model.dart';
 import 'package:flutter_clasificacion_proveedor/data/model/calidad_model.dart';
+import 'package:flutter_clasificacion_proveedor/data/model/calidad_model_bulto.dart';
 import 'package:flutter_clasificacion_proveedor/data/model/lod_model_reparto.dart';
 import 'package:flutter_clasificacion_proveedor/data/model/log_calidad.dart';
 import 'package:flutter_clasificacion_proveedor/data/model/log_model.dart';
@@ -94,6 +95,37 @@ class Service {
     }
   }
 
+  Future<String> enviarDiferencias(String nombre) async {
+    String base = "${BASE_URL}Calidad/EnviarDiferencias";
+
+    base += "/$nombre";
+
+    var url = Uri.parse(base);
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Credentials': 'true',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE'
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final parsed = json.decode(response.body) as List;
+
+        return "OK";
+      } else {
+        return "Error ${response.statusCode}";
+      }
+    } catch (exception) {
+      return exception.toString();
+    }
+  }
+
   Future<String> cerrarRevision(String nombre) async {
     String base = "${BASE_URL}Calidad/CerrarRevision";
 
@@ -150,6 +182,36 @@ class Service {
       return parsed
           .map<CalidadDetalleModel>(
               (json) => CalidadDetalleModel.fromJson(json))
+          .toList();
+    } else {
+      throw Exception('Error salvar los datos');
+    }
+  }
+
+  Future<List<CalidadModelBulto>> resetBultoCalidad(
+      LogCalidaModel linea) async {
+    String base = "${BASE_URL}Calidad/ResetBultoCalidad";
+
+    var data = linea.toJson();
+    // Map<String, dynamic> data = partesTrabajoLineaModel.toJson();
+
+    final body = jsonEncode(data);
+    var url = Uri.parse(base);
+
+    final response = await http.post(url,
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Credentials': 'true',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE'
+        },
+        body: body);
+    if (response.statusCode == 200) {
+      if (response.body == "[]") return [];
+      final parsed = json.decode(response.body).cast<Map<String, dynamic>>();
+      return parsed
+          .map<CalidadModelBulto>((json) => CalidadModelBulto.fromJson(json))
           .toList();
     } else {
       throw Exception('Error salvar los datos');
@@ -260,6 +322,23 @@ class Service {
           .toList();
     } else {
       throw Exception('Error Rbúsqueda de calidad');
+    }
+  }
+
+  Future<List<CalidadModelBulto>> fetchRevisionCalidadPendientesByBultos(
+      nombre, skuBulto) async {
+    String base =
+        "${BASE_URL}Calidad/GetRevisionCalidadPendientesByBulto?nombre=$nombre&skuBulto=$skuBulto";
+
+    final response = await http.get(Uri.parse(base));
+
+    if (response.statusCode == 200) {
+      final parsed = json.decode(response.body).cast<Map<String, dynamic>>();
+      return parsed
+          .map<CalidadModelBulto>((json) => CalidadModelBulto.fromJson(json))
+          .toList();
+    } else {
+      throw Exception('Error búsqueda de bulto');
     }
   }
 

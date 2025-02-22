@@ -4,6 +4,7 @@ import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_clasificacion_proveedor/data/model/borrar_bulto_calidad.dart';
 import 'package:flutter_clasificacion_proveedor/data/model/calidad_detalle_model.dart';
+import 'package:flutter_clasificacion_proveedor/data/model/calidad_model_bulto.dart';
 import 'package:flutter_clasificacion_proveedor/data/model/log_calidad.dart';
 import 'package:flutter_clasificacion_proveedor/data/model/user_model.dart';
 import 'package:flutter_clasificacion_proveedor/presentation/quality/calidad.dart';
@@ -36,6 +37,7 @@ class _DashBoardState extends State<CalidadDetalles> {
   bool alarm = true;
   int longitudBulto = 20;
   int longitudSku = 14;
+  List<CalidadModelBulto> items = [];
 
   //late FocusNode focusUbication;
 
@@ -65,6 +67,7 @@ class _DashBoardState extends State<CalidadDetalles> {
   }
 
   void bultoEnd() {
+    Service service = Service();
     String bulto = bultoController.text;
     if (bulto.length != longitudBulto) {
       errorDialog(
@@ -72,6 +75,33 @@ class _DashBoardState extends State<CalidadDetalles> {
       focusBulto.requestFocus();
       return;
     }
+    setState(() {
+      visible = false;
+    });
+
+    service
+        .fetchRevisionCalidadPendientesByBultos(widget.nombre, bulto)
+        .then((value) {
+      setState(() {
+        if (value.isEmpty) {
+          errorDialog("Error: No se ha encontrado el bulto");
+          focusBulto.requestFocus();
+          visible = true;
+          return;
+        }
+        visible = true;
+        items = value;
+        skuController.text = "";
+        focusSKU.requestFocus();
+      });
+    }).catchError((e) {
+      errorDialog("Error: $e");
+      setState(() {
+        visible = true;
+        focusSKU.requestFocus();
+      });
+    });
+
     focusSKU.requestFocus();
     /* var op = clasiModel.where((e) => e.mocaco == pos).toList();
 
@@ -124,6 +154,29 @@ class _DashBoardState extends State<CalidadDetalles> {
         //Navigator.pop(context);
       },
     ).show();
+  }
+
+  void updateCtaLeida(CalidadDetalleModel cModel) {
+    int index = items.indexWhere((element) => element.mocaco == cModel.mocaco);
+    if (index == -1) {
+      String model = cModel.mocaco.split('/')[0];
+      String calidad = cModel.mocaco.split('/')[1];
+      String color = cModel.mocaco.split('/')[2];
+      String talla = cModel.mocaco.split('/')[3];
+      items.add(CalidadModelBulto(
+          modelo: model,
+          calidad: calidad,
+          talla: talla,
+          color: color,
+          cantidad: cModel.bultos,
+          cantidadLeida: cModel.bultos - cModel.bultosPendientes,
+          mocaco: cModel.mocaco));
+    } else {
+      items[index].cantidadLeida = cModel.bultos - cModel.bultosPendientes;
+    }
+    /*items
+        .firstWhere((element) => element.mocaco == cModel.mocaco)
+        .cantidadLeida = cModel.bultos - cModel.bultosPendientes;*/
   }
 
   void logInsert() async {
@@ -184,6 +237,41 @@ class _DashBoardState extends State<CalidadDetalles> {
         }
         visible = true;
         clasiModel = value[0];
+        updateCtaLeida(clasiModel);
+        skuController.text = "";
+        focusSKU.requestFocus();
+      });
+    }).catchError((e) {
+      errorDialog("Error: $e");
+      setState(() {
+        visible = true;
+        focusSKU.requestFocus();
+      });
+    });
+  }
+
+  void resetBulto() async {
+    Service service = Service();
+    setState(() {
+      visible = false;
+    });
+    LogCalidaModel log = LogCalidaModel(
+      bulto: bultoController.text,
+      mocaco: clasiModel.mocaco,
+      usuario: widget.usuario.usuarioId,
+      nombre: widget.nombre,
+    );
+    service.resetBultoCalidad(log).then((value) {
+      setState(() {
+        if (value.isEmpty) {
+          errorDialog("Error: No se ha encontrado el SKU");
+          focusSKU.requestFocus();
+          visible = true;
+          return;
+        }
+        visible = true;
+        // clasiModel = value[0];
+        items = value;
         skuController.text = "";
         focusSKU.requestFocus();
       });
@@ -217,6 +305,7 @@ class _DashBoardState extends State<CalidadDetalles> {
         }
         visible = true;
         clasiModel = value[0];
+        updateCtaLeida(clasiModel);
         skuController.text = "";
         focusSKU.requestFocus();
       });
@@ -243,6 +332,7 @@ class _DashBoardState extends State<CalidadDetalles> {
         visible = true;
 
         bultoController.text = "";
+        items = [];
         focusBulto.requestFocus();
       });
     }).catchError((e) {
@@ -268,21 +358,29 @@ class _DashBoardState extends State<CalidadDetalles> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.email),
-            tooltip: 'Login',
+            tooltip: 'Finalizar',
             onPressed: () {
               showAlertDialog(context, widget.nombre, widget.usuario);
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.difference),
+            tooltip: 'Envio Diferencias',
+            onPressed: () {
+              showAlertDialogDiferencias(
+                  context, widget.nombre, widget.usuario);
             },
           ),
           IconButton(
             icon: const Icon(Icons.login),
             tooltip: 'Login',
             onPressed: () {
-              popAllandPush(context, LoginScreen());
+              popAllandPush(context, const LoginScreen());
             },
           ),
         ],
@@ -291,219 +389,368 @@ class _DashBoardState extends State<CalidadDetalles> {
       body: SafeArea(
           child: !visible
               ? const Center(child: CircularProgressIndicator())
-              : Column(children: [
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  SizedBox(
-                    child: Text(
-                      widget.nombre,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 15),
-                    ),
-                  ),
-                  SizedBox(
-                      child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        widget.usuario.usuarioId.toString(),
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 15),
-                      ),
+              : SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(children: [
                       const SizedBox(
-                        width: 10,
+                        height: 5,
                       ),
-                      IconButton(
-                        icon: alarm
-                            ? const Icon(Icons.volume_up)
-                            : const Icon(Icons.volume_mute),
-                        tooltip: 'Increase volume by 10',
-                        onPressed: () {
-                          setState(() {
-                            alarm = !alarm;
-                          });
-                        },
-                      ),
-                    ],
-                  )),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: SizedBox(
-                          height: 60,
-                          //width: 60,
-                          child: TextFormField(
-                            onEditingComplete: () {
-                              bultoEnd();
-                            },
-                            //  textInputAction: TextInputAction.done,
-                            autofocus: true,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 16),
-                            controller: bultoController,
-                            focusNode: focusBulto,
-
-                            validator: (val) {
-                              if (val!.isEmpty) {
-                                return "No puede estar vacio";
-                              } else {
-                                return null;
-                              }
-                            },
-                            decoration: const InputDecoration(
-                              labelText: 'BULTO',
-                              //icon: Icon(Icons.bar_chart_sharp),
+                      Row(
+                        children: [
+                          SizedBox(
+                            child: Text(
+                              widget.nombre,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 15),
                             ),
                           ),
-                        ),
+                          SizedBox(
+                              child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                widget.usuario.usuarioId.toString(),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 15),
+                              ),
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              IconButton(
+                                icon: alarm
+                                    ? const Icon(Icons.volume_up)
+                                    : const Icon(Icons.volume_mute),
+                                tooltip: 'Increase volume by 10',
+                                onPressed: () {
+                                  setState(() {
+                                    alarm = !alarm;
+                                  });
+                                },
+                              ),
+                            ],
+                          )),
+                        ],
+                      ),
+                      const SizedBox(
+                        height: 5,
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: SizedBox(
+                              height: 60,
+                              //width: 60,
+                              child: TextFormField(
+                                onEditingComplete: () {
+                                  bultoEnd();
+                                },
+
+                                //  textInputAction: TextInputAction.done,
+                                autofocus: true,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 16),
+                                controller: bultoController,
+                                focusNode: focusBulto,
+
+                                validator: (val) {
+                                  if (val!.isEmpty) {
+                                    return "No puede estar vacio";
+                                  } else {
+                                    return null;
+                                  }
+                                },
+                                decoration: const InputDecoration(
+                                  labelText: 'BULTO',
+                                  //icon: Icon(Icons.bar_chart_sharp),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 85,
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                await showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        content: Text(
+                                            "¿Estas seguro de resetear el bulto ${bultoController.text} ?"),
+                                        actions: <Widget>[
+                                          TextButton(
+                                            /* style: TextButton.styleFrom(
+                                              backgroundColor: Colors.blue,
+                                            ),*/
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: const Text(
+                                              "Cancelar",
+                                              style: TextStyle(
+                                                  color: Colors.black),
+                                            ),
+                                          ),
+                                          TextButton(
+                                            style: TextButton.styleFrom(
+                                              foregroundColor: Colors.blue,
+                                            ),
+                                            child: const Text(
+                                              "OK",
+                                              style:
+                                                  TextStyle(color: Colors.red),
+                                            ),
+                                            onPressed: () async {
+                                              Navigator.of(context).pop();
+                                              borrarBulto();
+                                            },
+                                          ),
+                                        ],
+                                      );
+                                    });
+                              },
+                              child: const Text(
+                                'Borrar',
+                                style: TextStyle(
+                                    color: Colors.white, fontSize: 12),
+                              ),
+                            ),
+                          )
+                        ],
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: SizedBox(
+                              height: 60,
+                              child: TextFormField(
+                                textAlign: TextAlign.center,
+                                enabled: true,
+                                onEditingComplete: () {
+                                  logInsert();
+                                },
+                                autofocus: false,
+                                focusNode: focusSKU,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 16),
+                                controller: skuController,
+                                decoration: const InputDecoration(
+                                  labelText: 'MOCACOTA',
+                                  //icon: Icon(Icons.bar_chart_sharp),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 120,
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                // Acción
+                                await showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        content: Text(
+                                            "¿Estas seguro de resetear las lecturas del mocacota ${clasiModel.mocaco} ?"),
+                                        actions: <Widget>[
+                                          TextButton(
+                                            /* style: TextButton.styleFrom(
+                                            backgroundColor: Colors.blue,
+                                          ),*/
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: const Text(
+                                              "Cancelar",
+                                              style: TextStyle(
+                                                  color: Colors.black),
+                                            ),
+                                          ),
+                                          TextButton(
+                                            style: TextButton.styleFrom(
+                                              foregroundColor: Colors.blue,
+                                            ),
+                                            child: const Text(
+                                              "OK",
+                                              style:
+                                                  TextStyle(color: Colors.red),
+                                            ),
+                                            onPressed: () async {
+                                              Navigator.of(context).pop();
+                                              resetMocacota();
+                                            },
+                                          ),
+                                        ],
+                                      );
+                                    });
+                              },
+                              child: const Text(
+                                'Reset Moca.',
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.white),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(
+                        height: 10,
                       ),
                       SizedBox(
-                        width: 85,
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            await showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    content: Text(
-                                        "¿Estas seguro de resetear el bulto ${bultoController.text} ?"),
-                                    actions: <Widget>[
-                                      TextButton(
-                                        /* style: TextButton.styleFrom(
-                                          backgroundColor: Colors.blue,
-                                        ),*/
-                                        onPressed: () {
-                                          Navigator.of(context).pop();
-                                        },
-                                        child: const Text(
-                                          "Cancelar",
-                                          style: TextStyle(color: Colors.black),
-                                        ),
-                                      ),
-                                      TextButton(
-                                        style: TextButton.styleFrom(
-                                          primary: Colors.blue,
-                                        ),
-                                        child: const Text(
-                                          "OK",
-                                          style: TextStyle(color: Colors.red),
-                                        ),
-                                        onPressed: () async {
-                                          Navigator.of(context).pop();
-                                          borrarBulto();
-                                        },
-                                      ),
-                                    ],
-                                  );
-                                });
-                          },
-                          child: const Text(
-                            'Borrar',
-                            style: TextStyle(color: Colors.white, fontSize: 12),
+                          child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Mocacota : ${clasiModel.mocaco}',
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 12),
+                            ),
                           ),
-                        ),
-                      )
-                    ],
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  Container(
-                    height: 60,
-                    alignment: Alignment.center,
-                    child: TextFormField(
-                      textAlign: TextAlign.center,
-                      enabled: true,
-                      onEditingComplete: () {
-                        logInsert();
-                      },
-                      autofocus: false,
-                      focusNode: focusSKU,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16),
-                      controller: skuController,
-                      decoration: const InputDecoration(
-                        labelText: 'MOCACOTA',
-                        //icon: Icon(Icons.bar_chart_sharp),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  SizedBox(
-                      child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Mocacota : ${clasiModel.mocaco}',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 14),
-                        ),
+                          SizedBox(
+                            width: 125,
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                // Acción
+                                await showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        content: Text(
+                                            "¿Estas seguro de resetear todo el bulto ${bultoController.text} ?"),
+                                        actions: <Widget>[
+                                          TextButton(
+                                            /* style: TextButton.styleFrom(
+                                            backgroundColor: Colors.blue,
+                                          ),*/
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: const Text(
+                                              "Cancelar",
+                                              style: TextStyle(
+                                                  color: Colors.black),
+                                            ),
+                                          ),
+                                          TextButton(
+                                            style: TextButton.styleFrom(
+                                              foregroundColor: Colors.blue,
+                                            ),
+                                            child: const Text(
+                                              "OK",
+                                              style:
+                                                  TextStyle(color: Colors.red),
+                                            ),
+                                            onPressed: () async {
+                                              Navigator.of(context).pop();
+                                              resetBulto();
+                                            },
+                                          ),
+                                        ],
+                                      );
+                                    });
+                              },
+                              child: const Text(
+                                'Reset bulto',
+                                style: TextStyle(
+                                    fontSize: 14, color: Colors.white),
+                              ),
+                            ),
+                          ),
+                        ],
+                      )),
+                      SizedBox(
+                          child: Text(
+                        'Total: ${clasiModel.bultos} Pendientes: ${clasiModel.bultosPendientes} Leidos: ${clasiModel.bultos - clasiModel.bultosPendientes}',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 14),
+                      )),
+                      const SizedBox(
+                        height: 10,
                       ),
                       SizedBox(
-                        width: 90,
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            // Acción
-                            await showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    content: Text(
-                                        "¿Estas seguro de resetear las lecturas del mocacota ${clasiModel.mocaco} ?"),
-                                    actions: <Widget>[
-                                      TextButton(
-                                        /* style: TextButton.styleFrom(
-                                        backgroundColor: Colors.blue,
-                                      ),*/
-                                        onPressed: () {
-                                          Navigator.of(context).pop();
-                                        },
-                                        child: const Text(
-                                          "Cancelar",
-                                          style: TextStyle(color: Colors.black),
-                                        ),
+                        height: 250,
+                        child: items.isNotEmpty
+                            ? SingleChildScrollView(
+                                scrollDirection: Axis.vertical,
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: DataTable(
+                                    headingRowColor: MaterialStateProperty.all(
+                                        Colors.blueAccent), // Color de cabecera
+                                    dataRowColor: MaterialStateProperty
+                                        .resolveWith<Color?>(
+                                      (Set<MaterialState> states) {
+                                        return states.contains(
+                                                MaterialState.selected)
+                                            ? Colors.lightBlue
+                                                .shade100 // Color al seleccionar fila
+                                            : null; // Color por defecto
+                                      },
+                                    ),
+                                    columns: const [
+                                      DataColumn(
+                                        label: Text(
+                                            "Modelo/Calidad/Color/Talla",
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold)),
                                       ),
-                                      TextButton(
-                                        style: TextButton.styleFrom(
-                                          primary: Colors.blue,
-                                        ),
-                                        child: const Text(
-                                          "OK",
-                                          style: TextStyle(color: Colors.red),
-                                        ),
-                                        onPressed: () async {
-                                          Navigator.of(context).pop();
-                                          resetMocacota();
-                                        },
+                                      DataColumn(
+                                        label: Text("Ct",
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold)),
+                                      ),
+                                      DataColumn(
+                                        label: Text("Ct le",
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold)),
                                       ),
                                     ],
-                                  );
-                                });
-                          },
-                          child: const Text(
-                            'Reset',
-                            style: TextStyle(fontSize: 14, color: Colors.white),
-                          ),
-                        ),
+                                    rows: List.generate(items.length, (index) {
+                                      bool isEvenRow = index % 2 == 0;
+                                      return DataRow(
+                                        color: MaterialStateProperty.all(
+                                            isEvenRow
+                                                ? Colors.grey[200]
+                                                : Colors.white),
+                                        cells: [
+                                          DataCell(Text(
+                                              items[index].mocaco.toString())),
+                                          DataCell(Text(items[index]
+                                              .cantidad
+                                              .toString())),
+                                          DataCell(Text(items[index]
+                                              .cantidadLeida
+                                              .toString())),
+                                        ],
+                                      );
+                                    }),
+                                  ),
+                                ),
+                                // Permite desplazamiento horizontal
+                              )
+                            : const Text(''),
                       ),
-                    ],
-                  )),
-                  SizedBox(
-                      child: Text(
-                    'Total: ${clasiModel.bultos} Pendientes: ${clasiModel.bultosPendientes} Leidos: ${clasiModel.bultos - clasiModel.bultosPendientes}',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 14),
-                  ))
-                ])),
+                      /* SizedBox(
+                        height: 250,
+                        child: ListView.builder(
+                            itemCount: items.length,
+                            itemBuilder: (context, index) {
+                              return ListTile(
+                                title: Text(
+                                    'Modelo: ${items[index].modelo} Calidad: ${items[index].calidad} Talla: ${items[index].talla} Color: ${items[index].color} Cantidad: ${items[index].cantidad} Leida: ${items[index].cantidadLeida}'),
+                              );
+                            }),
+                      ),*/
+                    ]),
+                  ),
+                )),
     );
   }
 }
@@ -586,6 +833,98 @@ showAlertDialog(BuildContext context, String nombre, UserModel usuario) {
                                   builder: (context) => Calidad(
                                         usuario: usuario,
                                       )))
+                        })
+                    // ignore: invalid_return_type_for_catch_error
+                    .catchError((e) => {
+                          setState(() {
+                            contentText = e;
+                            visible = false;
+                          })
+                        });
+              },
+              child: const Text("Aceptar"),
+            ),
+          ],
+        );
+      });
+    },
+  );
+}
+
+showAlertDialogDiferencias(
+    BuildContext context, String nombre, UserModel usuario) {
+  // set up the buttons
+  Service service = Service();
+  bool visible = false;
+  String contentText = "Desea enviar por correo las diferencias $nombre?";
+  Widget cancelButton = TextButton(
+    child: const Text("Cancelar"),
+    onPressed: () {
+      Navigator.of(context).pop();
+    },
+  );
+  Widget continueButton = TextButton(
+    child: const Text("Aceptar"),
+    onPressed: () {
+      service
+          .enviarDiferencias(nombre)
+          .then((value) => {})
+          .catchError((e) => null);
+
+      Navigator.of(context).pop();
+    },
+  );
+
+  // set up the AlertDialog
+  AlertDialog alert = AlertDialog(
+    title: const Text("AlertDialog"),
+    content: Column(
+      children: [
+        visible
+            ? const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.red))
+            : Text("Desea enviar por correo las diferencias de $nombre?"),
+      ],
+    ),
+    actions: [
+      cancelButton,
+      continueButton,
+    ],
+  );
+
+  // show the dialog
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return StatefulBuilder(builder: (context, setState) {
+        return AlertDialog(
+          title: const Text("AlertDialog"),
+          content: visible
+              ? const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.red))
+              : Text(contentText),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancelar"),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  visible = true;
+                });
+                service
+                    .enviarDiferencias(nombre)
+                    .then((value) => {
+                          setState(() {
+                            visible = false;
+                          }),
+                          Navigator.of(context).pop(),
+                          /* Navigator.of(context)
+                              .pushReplacement(MaterialPageRoute(
+                                  builder: (context) => Calidad(
+                                        usuario: usuario,
+                                      )))*/
                         })
                     // ignore: invalid_return_type_for_catch_error
                     .catchError((e) => {

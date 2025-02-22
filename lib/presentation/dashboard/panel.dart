@@ -16,7 +16,7 @@ class Panel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Clasificador v 0.0.7'),
+        title: const Text('Clasificador v 0.0.9'),
       ),
       body: MainMenuBody(
         usuario: usuario,
@@ -35,7 +35,7 @@ class MainMenuBody extends StatelessWidget {
       MenuData(Icons.rule, 'CLASIFICADOR REPARTO PROVEEDOR'),
       MenuData(Icons.add_shopping_cart, 'CLASIFICADOR SIN MATRICULA'),
       MenuData(Icons.high_quality, 'REVISION CALIDAD'),
-      MenuData(Icons.high_quality, 'REVISION CALIDAD DIFERENCIAS'),
+      //MenuData(Icons.high_quality, 'REVISION CALIDAD DIFERENCIAS'),
       MenuData(Icons.precision_manufacturing_sharp, 'CONFIGURACIÓN'),
     ];
 
@@ -89,13 +89,13 @@ class MainMenuBody extends StatelessWidget {
                                       usuario: usuario,
                                     )));
                             break;
-                          case 4: // Enter this block if mark == 0
+                          /* case 4: // Enter this block if mark == 0
                             Navigator.of(context).push(MaterialPageRoute(
                                 builder: (context) => CalidadDiferencias(
                                       usuario: usuario,
                                     )));
-                            break;
-                          case 5: // Enter this block if mark == 0
+                            break;*/
+                          case 4: // Enter this block if mark == 0
                             Navigator.of(context).push(MaterialPageRoute(
                                 builder: (context) => ConfigurationView(
                                       usuario: usuario,
