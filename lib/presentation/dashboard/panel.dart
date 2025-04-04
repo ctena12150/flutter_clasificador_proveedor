@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_clasificacion_proveedor/data/model/user_model.dart';
+import 'package:flutter_clasificacion_proveedor/presentation/classification/classification_direct.dart';
 import 'package:flutter_clasificacion_proveedor/presentation/dashboard/configuracion_view.dart';
 import 'package:flutter_clasificacion_proveedor/presentation/dashboard/dashboard.dart';
 import 'package:flutter_clasificacion_proveedor/presentation/dashboard/dashboard_reparto.dart';
@@ -35,6 +36,7 @@ class MainMenuBody extends StatelessWidget {
       MenuData(Icons.rule, 'CLASIFICADOR REPARTO PROVEEDOR'),
       MenuData(Icons.add_shopping_cart, 'CLASIFICADOR SIN MATRICULA'),
       MenuData(Icons.high_quality, 'REVISION CALIDAD'),
+      MenuData(Icons.high_quality, 'CLASIFICADOR DIRECTO'),
       //MenuData(Icons.high_quality, 'REVISION CALIDAD DIFERENCIAS'),
       MenuData(Icons.precision_manufacturing_sharp, 'CONFIGURACIÓN'),
     ];
@@ -89,13 +91,13 @@ class MainMenuBody extends StatelessWidget {
                                       usuario: usuario,
                                     )));
                             break;
-                          /* case 4: // Enter this block if mark == 0
+                          case 4: // Enter this block if mark == 0
                             Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => CalidadDiferencias(
+                                builder: (context) => ClassificationDirect(
                                       usuario: usuario,
                                     )));
-                            break;*/
-                          case 4: // Enter this block if mark == 0
+                            break;
+                          case 5: // Enter this block if mark == 0
                             Navigator.of(context).push(MaterialPageRoute(
                                 builder: (context) => ConfigurationView(
                                       usuario: usuario,

@@ -4,6 +4,8 @@ import 'package:flutter_clasificacion_proveedor/data/model/borrar_bulto_calidad.
 import 'package:flutter_clasificacion_proveedor/data/model/calidad_detalle_model.dart';
 import 'package:flutter_clasificacion_proveedor/data/model/calidad_model.dart';
 import 'package:flutter_clasificacion_proveedor/data/model/calidad_model_bulto.dart';
+import 'package:flutter_clasificacion_proveedor/data/model/clasi_cabecera_directo_model.dart';
+import 'package:flutter_clasificacion_proveedor/data/model/clasi_lineas_directo_model.dart';
 import 'package:flutter_clasificacion_proveedor/data/model/lod_model_reparto.dart';
 import 'package:flutter_clasificacion_proveedor/data/model/log_calidad.dart';
 import 'package:flutter_clasificacion_proveedor/data/model/log_model.dart';
@@ -13,6 +15,135 @@ import 'package:flutter_clasificacion_proveedor/utils/navigation_utils.dart';
 import 'package:http/http.dart' as http;
 
 class Service {
+  Future<String> CerrarClasificacionDirecta(int idCabecera) async {
+    String base = "${BASE_URL}Clasificacion/CerrarClasificacionDirecta";
+
+    base += "/$idCabecera";
+
+    var url = Uri.parse(base);
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Credentials': 'true',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE'
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // final parsed = json.decode(response.body) as List;
+
+        return "OK";
+      } else {
+        return "Error ${response.statusCode}";
+      }
+    } catch (exception) {
+      return exception.toString();
+    }
+  }
+
+  Future<List<ClasiLineaDirectoModel>> saveLogLineDirecto(
+      ClasiLineaDirectoModel lineas) async {
+    String base = "${BASE_URL}Clasificacion/saveLogLineDirecto";
+
+    var data = lineas.toJson();
+    // Map<String, dynamic> data = partesTrabajoLineaModel.toJson();
+
+    final body = jsonEncode(data);
+    var url = Uri.parse(base);
+    try {
+      final response = await http.post(url,
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Credentials': 'true',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE'
+          },
+          body: body);
+
+      if (response.statusCode == 200) {
+        if (response.body == "[]") return [];
+
+        final parsed = json.decode(response.body).cast<Map<String, dynamic>>();
+        return parsed
+            .map<ClasiLineaDirectoModel>(
+                (json) => ClasiLineaDirectoModel.fromJson(json))
+            .toList();
+      } else {
+        throw Exception('Error salvar los datos');
+      }
+    } catch (exception) {
+      throw Exception('Error $exception');
+    }
+  }
+
+  Future<String> getClasificadorCabeceraDirecto(String usuario) async {
+    String base =
+        "${BASE_URL}Clasificacion/getClasificadorCabeceraDirecto?usuario=";
+
+    base += usuario;
+
+    var url = Uri.parse(base);
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Credentials': 'true',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE'
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return response.body;
+      } else {
+        throw Exception('Error salvar los datos');
+      }
+    } catch (exception) {
+      throw Exception('Error $exception');
+    }
+  }
+
+  Future<List<ClasiCabeceraDirectoModel>> saveHeaderDirect(
+      String nombre, String usuario) async {
+    String base = "${BASE_URL}Clasificacion/saveHeaderDirect";
+    ClasiCabeceraDirectoModel clasiCabeceraDirectoModel =
+        ClasiCabeceraDirectoModel(
+            nombre: nombre, usuario: usuario, idCabecera: 0, fecha: "");
+
+    final body = jsonEncode(clasiCabeceraDirectoModel);
+    var url = Uri.parse(base);
+
+    final response = await http.post(url,
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Credentials': 'true',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE'
+        },
+        body: body);
+    if (response.statusCode == 200) {
+      if (response.body == "[]") return [];
+
+      final parsed = json.decode(response.body).cast<Map<String, dynamic>>();
+      return parsed
+          .map<ClasiCabeceraDirectoModel>(
+              (json) => ClasiCabeceraDirectoModel.fromJson(json))
+          .toList();
+    } else {
+      throw Exception('Error salvar los datos');
+    }
+  }
+
   Future<int> borrarBultoCalidadDiferencias(
       BorrarBultoCalidaModel linea) async {
     String base = "${BASE_URL}Calidad/DeleteBultoCalidadDiferencias";
